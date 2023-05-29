@@ -1,0 +1,3 @@
+CREATE TABLE if not exists products (id mediumint(8) unsigned NOT NULL auto_increment,Name varchar(255) default NULL,Price varchar(255) default NULL, ImageUrl varchar(255) default NULL,PRIMARY KEY (id)) AUTO_INCREMENT=1;
+
+INSERT IGNORE INTO products (id, Name,Price,ImageUrl) VALUES (1,"Laptop","100","c-1.png"),(2,"Drone","200","c-2.png"),(3,"VR","300","c-3.png"),(4,"Tablet","50","c-5.png"),(5,"Watch","90","c-6.png"),(6,"Phone Covers","20","c-7.png"),(7,"Phone","80","c-8.png"),(8,"Laptop","150","c-4.png");

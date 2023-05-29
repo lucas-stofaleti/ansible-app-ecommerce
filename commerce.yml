@@ -1,0 +1,64 @@
+---
+- name: Configure MariaDB
+  hosts: node
+  become: yes
+
+  tasks:
+    - name: Install and ensure MariaDB in latest version
+      ansible.builtin.apt:
+        name: mariadb-server
+        state: latest
+        update_cache: yes
+
+    - name: Start & Enable service MariaDB
+      ansible.builtin.service:
+        name: mariadb
+        state: started
+        enabled: yes
+
+    - name: Install pip3
+      ansible.builtin.apt:
+        name: python3-pip
+        state: latest
+        update_cache: yes
+
+    - name: Make sure pymysql is present
+      pip:
+        name: pymysql
+        state: present
+
+    - name: Create new databases ecomdb
+      community.mysql.mysql_db:
+        name:
+          - ecomdb
+        state: present
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Create database user with name 'ecomuser' with all database privileges
+      community.mysql.mysql_user:
+        name: ecomuser
+        password: "{ { db_password } }"
+        priv: "*.*:ALL"
+        state: present
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Copy sql script to server
+      copy:
+        src: db-load-script.sql
+        dest: /tmp/db-load-script.sql
+      register: copy_sql
+
+    - name: Insert sample data into database
+      mysql_db:
+        name: ecomdb
+        state: import
+        target: /tmp/db-load-script.sql
+        login_unix_socket: /run/mysqld/mysqld.sock
+      when: copy_sql.changed
+#     - name: Run several insert queries against db ecomdb
+#       community.mysql.mysql_query:
+#         login_db: ecomdb
+#         query:
+#           - CREATE TABLE products (id mediumint(8) unsigned NOT NULL auto_increment,Name varchar(255) default NULL,Price varchar(255) default NULL, ImageUrl varchar(255) default NULL,PRIMARY KEY (id)) AUTO_INCREMENT=1
+#           - INSERT INTO products (Name,Price,ImageUrl) VALUES ("Laptop","100","c-1.png"),("Drone","200","c-2.png"),("VR","300","c-3.png"),("Tablet","50","c-5.png"),("Watch","90","c-6.png"),("Phone Covers","20","c-7.png"),("Phone","80","c-8.png"),("Laptop","150","c-4.png")
+#         login_unix_socket: /run/mysqld/mysqld.sock
