@@ -65,6 +65,7 @@
       ansible.builtin.apt:
         name:
           - apache2
+          - libapache2-mod-php
           - php
           - php-mysql
         state: latest
@@ -75,3 +76,27 @@
         name: apache2
         state: started
         enabled: yes
+
+    - name: Delete default index.html file if it exists
+      file:
+        path: /var/www/html/index.html
+        state: absent
+
+    - name: Clone App
+      ansible.builtin.git:
+        repo: "https://github.com/kodekloudhub/learning-app-ecommerce.git"
+        dest: /var/www/html/
+        version: master
+        force: True
+
+    - name: Replace with DB config
+      replace:
+        path: /var/www/html/index.php
+        regexp: "172.20.1.101"
+        replace: "localhost"
+
+    - name: Replace password DB config
+      replace:
+        path: /var/www/html/index.php
+        regexp: "ecompassword"
+        replace: "{{ db_password }}"
