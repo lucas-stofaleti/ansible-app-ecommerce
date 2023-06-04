@@ -1,6 +1,6 @@
 ---
 - name: Configure MariaDB
-  hosts: all
+  hosts: webserver
   become: yes
 
   tasks:
@@ -37,7 +37,7 @@
     - name: Create database user with name 'ecomuser' with all database privileges
       community.mysql.mysql_user:
         name: ecomuser
-        password: "{ { db_password } }"
+        password: "{{ db_password }}"
         priv: "*.*:ALL"
         state: present
         login_unix_socket: /run/mysqld/mysqld.sock
@@ -57,7 +57,7 @@
       when: copy_sql.changed
 
 - name: Configure Web App
-  hosts: all
+  hosts: webserver
   become: yes
 
   tasks:
@@ -85,9 +85,20 @@
     - name: Clone App
       ansible.builtin.git:
         repo: "https://github.com/kodekloudhub/learning-app-ecommerce.git"
-        dest: /var/www/html/
+        dest: /git/
         version: master
-        force: True
+      notify:
+        - Copy app repo
+
+  handlers:
+    - name: Copy app repo
+      ansible.builtin.copy:
+        src: /git/
+        dest: /var/www/html/
+        remote_src: yes
+      notify:
+        - Replace with DB config
+        - Replace password DB config
 
     - name: Replace with DB config
       replace:
